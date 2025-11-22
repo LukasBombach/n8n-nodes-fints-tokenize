@@ -1,19 +1,19 @@
 {
-	"name": "n8n-nodes-<...>",
+	"name": "n8n-nodes-fin-categorize",
 	"version": "0.1.0",
-	"description": "",
+	"description": "A node package for categorizing financial transactions in n8n",
 	"license": "MIT",
 	"homepage": "",
 	"keywords": [
 		"n8n-community-node-package"
 	],
 	"author": {
-		"name": "",
-		"email": ""
+		"name": "Lukas Bombach",
+		"email": "lukas.bombach@googlemail.com"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/<...>/n8n-nodes-<...>.git"
+		"url": "https://github.com/LukasBombach/n8n-nodes-fin-categorize.git"
 	},
 	"scripts": {
 		"build": "n8n-node build",
@@ -48,5 +48,8 @@
 	},
 	"peerDependencies": {
 		"n8n-workflow": "*"
+	},
+	"dependencies": {
+		"csv-parse": "6.1.0"
 	}
 }

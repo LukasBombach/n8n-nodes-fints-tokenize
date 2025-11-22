@@ -5,6 +5,7 @@ import type {
 	INodeTypeDescription,
 } from 'n8n-workflow';
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
+import { parse } from 'csv-parse/sync';
 
 export class Example implements INodeType {
 	description: INodeTypeDescription = {

@@ -1,0 +1,3 @@
+"tag";"rule"
+"supermarket";"text.contains('edeka')"
+"baumarkt";"text.contains('obi')"
