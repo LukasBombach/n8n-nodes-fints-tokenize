@@ -35,14 +35,13 @@ export class Example implements INodeType {
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 
-		const returnData: INodeExecutionData[] = [];
+		const result: INodeExecutionData[] = [];
 
 		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
 			try {
 				const item = items[itemIndex];
 				const data = item.json;
 
-				// Validate that the item has the required fields
 				if (!data.tag || typeof data.tag !== 'string') {
 					throw new NodeOperationError(
 						this.getNode(),
@@ -59,27 +58,13 @@ export class Example implements INodeType {
 					);
 				}
 
-				// Type assertion after validation
 				const validatedData = data as InputItem;
 
-				// const tag = evaluate("text == 'edeka'", { text: 'edeka' }) ? validatedData.tag : null;
-
-				const tag = run(
-					`text.indexOf('edeka') == 0`,
-					{ text: 'edeka' },
-					{ funcs: STRINGS_EXT_FUNCS },
-				)
+				const tag = run(validatedData.rule, { text: 'edeka obi' }, { funcs: STRINGS_EXT_FUNCS })
 					? validatedData.tag
 					: null;
 
-				console.log('Evaluated tag:', tag);
-
-				returnData.push({
-					json: { ...validatedData, tag },
-				});
-
-				// Process your validated data here
-				// Example: item.json.processed = true;
+				result.push({ json: { tag } });
 			} catch (error) {
 				if (this.continueOnFail()) {
 					items.push({ json: { error: error.message }, pairedItem: itemIndex });
@@ -95,6 +80,6 @@ export class Example implements INodeType {
 			}
 		}
 
-		return [returnData];
+		return [result];
 	}
 }
