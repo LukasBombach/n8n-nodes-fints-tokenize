@@ -5,7 +5,13 @@ import type {
 	INodeTypeDescription,
 } from 'n8n-workflow';
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
-import { parse } from 'csv-parse/sync';
+import { run } from '@bufbuild/cel';
+import { STRINGS_EXT_FUNCS } from '@bufbuild/cel/ext/strings';
+
+type InputItem = {
+	tag: string;
+	rule: string;
+};
 
 export class Example implements INodeType {
 	description: INodeTypeDescription = {
@@ -21,49 +27,64 @@ export class Example implements INodeType {
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
-		properties: [
-			// Node properties which the user gets displayed and
-			// can change on the node.
-			{
-				displayName: 'My String',
-				name: 'myString',
-				type: 'string',
-				default: '',
-				placeholder: 'Placeholder value',
-				description: 'The description text',
-			},
-		],
+		properties: [],
 	};
 
 	// The function below is responsible for actually doing whatever this node
-	// is supposed to do. In this case, we're just appending the `myString` property
-	// with whatever the user has entered.
-	// You can make async calls and use `await`.
+	// is supposed to do. You can make async calls and use `await`.
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 
-		let item: INodeExecutionData;
-		let myString: string;
+		const returnData: INodeExecutionData[] = [];
 
-		// Iterates over all input items and add the key "myString" with the
-		// value the parameter "myString" resolves to.
-		// (This could be a different value for each item in case it contains an expression)
 		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
 			try {
-				myString = this.getNodeParameter('myString', itemIndex, '') as string;
-				item = items[itemIndex];
+				const item = items[itemIndex];
+				const data = item.json;
 
-				item.json.myString = myString;
+				// Validate that the item has the required fields
+				if (!data.tag || typeof data.tag !== 'string') {
+					throw new NodeOperationError(
+						this.getNode(),
+						'Missing or invalid required field: "tag" must be a string',
+						{ itemIndex },
+					);
+				}
+
+				if (!data.rule || typeof data.rule !== 'string') {
+					throw new NodeOperationError(
+						this.getNode(),
+						'Missing or invalid required field: "rule" must be a string',
+						{ itemIndex },
+					);
+				}
+
+				// Type assertion after validation
+				const validatedData = data as InputItem;
+
+				// const tag = evaluate("text == 'edeka'", { text: 'edeka' }) ? validatedData.tag : null;
+
+				const tag = run(
+					`text.indexOf('edeka') == 0`,
+					{ text: 'edeka' },
+					{ funcs: STRINGS_EXT_FUNCS },
+				)
+					? validatedData.tag
+					: null;
+
+				console.log('Evaluated tag:', tag);
+
+				returnData.push({
+					json: { ...validatedData, tag },
+				});
+
+				// Process your validated data here
+				// Example: item.json.processed = true;
 			} catch (error) {
-				// This node should never fail but we want to showcase how
-				// to handle errors.
 				if (this.continueOnFail()) {
-					items.push({ json: this.getInputData(itemIndex)[0].json, error, pairedItem: itemIndex });
+					items.push({ json: { error: error.message }, pairedItem: itemIndex });
 				} else {
-					// Adding `itemIndex` allows other workflows to handle this error
 					if (error.context) {
-						// If the error thrown already contains the context property,
-						// only append the itemIndex
 						error.context.itemIndex = itemIndex;
 						throw error;
 					}
@@ -74,6 +95,6 @@ export class Example implements INodeType {
 			}
 		}
 
-		return [items];
+		return [returnData];
 	}
 }

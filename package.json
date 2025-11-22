@@ -50,6 +50,8 @@
 		"n8n-workflow": "*"
 	},
 	"dependencies": {
+		"@bufbuild/cel": "0.3.0",
+		"cel-js": "0.8.2",
 		"csv-parse": "6.1.0"
 	}
 }
