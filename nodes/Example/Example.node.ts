@@ -52,10 +52,8 @@ export class Example implements INodeType {
 
 		return [
 			data.map((item) => {
-				const tags = rules
-					.filter(({ rule }) => run(rule, item, { funcs: STRINGS_EXT_FUNCS }))
-					.map(({ tag }) => tag);
-				return { json: { ...item, tags } };
+				const tag = rules.find(({ rule }) => run(rule, item, { funcs: STRINGS_EXT_FUNCS }))?.tag;
+				return { json: { ...item, tag } };
 			}),
 		];
 	}
