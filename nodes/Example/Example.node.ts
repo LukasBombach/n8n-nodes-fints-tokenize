@@ -8,7 +8,11 @@ import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import { run } from '@bufbuild/cel';
 import { STRINGS_EXT_FUNCS } from '@bufbuild/cel/ext/strings';
 
-type InputItem = {
+type Transaction = {
+	text: string;
+};
+
+type Rule = {
 	tag: string;
 	rule: string;
 };
@@ -18,22 +22,51 @@ export class Example implements INodeType {
 		displayName: 'Example',
 		name: 'example',
 		icon: { light: 'file:example.svg', dark: 'file:example.dark.svg' },
-		group: ['input'],
 		version: 1,
 		description: 'Basic Example Node',
 		defaults: {
 			name: 'Example',
 		},
-		inputs: [NodeConnectionTypes.Main],
-		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
+		group: ['transform'],
+		inputs: [
+			{
+				displayName: 'Rules',
+				type: NodeConnectionTypes.Main,
+				required: true,
+			},
+			{
+				displayName: 'Data',
+				type: NodeConnectionTypes.Main,
+				required: true,
+			},
+		],
+		outputs: [NodeConnectionTypes.Main],
+		outputNames: ['Tagged Data'],
 		properties: [],
 	};
 
 	// The function below is responsible for actually doing whatever this node
 	// is supposed to do. You can make async calls and use `await`.
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-		const items = this.getInputData();
+		const rules = this.getInputData(0).map((item) => item.json) as Rule[];
+		const data = this.getInputData(1).map((item) => item.json) as Transaction[];
+
+		return [
+			data.map((item) => {
+				/* const tag = run(item.rule, { text: 'edeka obi' }, { funcs: STRINGS_EXT_FUNCS })
+					? item.tag
+					: null; */
+
+				const tags = rules
+					.filter(({ rule }) => run(rule, item, { funcs: STRINGS_EXT_FUNCS }))
+					.map(({ tag }) => tag);
+
+				return { json: { ...item, tags } };
+			}),
+		];
+
+		/* const items = this.getInputData();
 
 		const result: INodeExecutionData[] = [];
 
@@ -80,6 +113,6 @@ export class Example implements INodeType {
 			}
 		}
 
-		return [result];
+		return [result]; */
 	}
 }
